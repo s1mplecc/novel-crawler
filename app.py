@@ -1,10 +1,10 @@
 import os
 import re
-import time
-from concurrent.futures import ProcessPoolExecutor
 from urllib import request
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 from bs4 import BeautifulSoup
+from clock import timer
 
 NOVEL_NETLOC = 'https://www.biquge.com.cn'
 
@@ -39,10 +39,22 @@ def _extract_chapter_content(chapter, decode='UTF-8'):
     return chapter[0] + '\n\n' + content.replace('\xa0\xa0\xa0\xa0', '\n\b\b') + '\n\n'
 
 
-def download(chapters, parallelism=4):
+@timer
+def multithreading(chapters, parallelism=8):
+    with ThreadPoolExecutor(parallelism) as executor:
+        contents = executor.map(_extract_chapter_content, chapters)
+    return contents
+
+
+@timer
+def multiprocessing(chapters, parallelism=8):
     with ProcessPoolExecutor(parallelism) as executor:
         contents = executor.map(_extract_chapter_content, chapters)
     return contents
+
+
+def extract_contents(chapters, mode=multiprocessing, parallelism=8):
+    return mode(chapters, parallelism)
 
 
 def write_to_file(title, contents, encoding='UTF-8'):
@@ -51,14 +63,13 @@ def write_to_file(title, contents, encoding='UTF-8'):
         f.writelines(contents)
 
 
-def novel_crawler(novel_id):
+def novel_crawler(novel_id, mode=multiprocessing, parallelism=8):
     title = extract_title(novel_id)
     chapters = extract_chapters(novel_id)
-    contents = download(chapters, parallelism=64)
+    contents = extract_contents(chapters, mode=mode, parallelism=parallelism)
     write_to_file(title, contents)
 
 
 if __name__ == '__main__':
-    start = time.time()
-    novel_crawler('25644')
-    print(f'Time spent: {time.time() - start}s')
+    # novel_crawler('25644', mode=multiprocess)
+    novel_crawler('68939', mode=multiprocessing, parallelism=64)
