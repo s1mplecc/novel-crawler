@@ -1,10 +1,11 @@
 import os
 import re
-from urllib import request
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from urllib import request
 
 from bs4 import BeautifulSoup
-from timer import timer
+
+from decorator import timer
 
 NOVEL_NETLOC = 'https://www.biquge.com.cn'
 
@@ -40,6 +41,14 @@ def _extract_chapter_content(chapter, decode='UTF-8'):
 
 
 @timer
+def coroutine(chapters, parallelism=8):
+    from gevent import monkey
+    monkey.patch_all()
+    from gevent.pool import Pool
+    return Pool(parallelism).map(_extract_chapter_content, chapters)
+
+
+@timer
 def multithreading(chapters, parallelism=8):
     with ThreadPoolExecutor(parallelism) as executor:
         contents = executor.map(_extract_chapter_content, chapters)
@@ -71,5 +80,7 @@ def novel_crawler(novel_id, mode=multiprocessing, parallelism=8):
 
 
 if __name__ == '__main__':
-    # novel_crawler('25644', mode=multiprocess)
-    novel_crawler('68939', mode=multiprocessing, parallelism=64)
+    novel_crawler('25644', mode=multithreading, parallelism=128)
+    novel_crawler('25644', mode=multiprocessing, parallelism=128)
+    novel_crawler('25644', mode=coroutine, parallelism=128)
+    novel_crawler('25644', mode=multiprocessing, parallelism=128)
