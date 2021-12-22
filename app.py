@@ -4,7 +4,7 @@ from urllib import request
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 from bs4 import BeautifulSoup
-from clock import timer
+from timer import timer
 
 NOVEL_NETLOC = 'https://www.biquge.com.cn'
 
