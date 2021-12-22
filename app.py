@@ -39,22 +39,26 @@ def _extract_chapter_content(chapter, decode='UTF-8'):
     return chapter[0] + '\n\n' + content.replace('\xa0\xa0\xa0\xa0', '\n\b\b') + '\n\n'
 
 
-def download(title, chapters):
-    with ProcessPoolExecutor(128) as executor:
+def download(chapters, parallelism=4):
+    with ProcessPoolExecutor(parallelism) as executor:
         contents = executor.map(_extract_chapter_content, chapters)
+    return contents
+
+
+def write_to_file(title, contents, encoding='UTF-8'):
     os.makedirs('downloads', exist_ok=True)
-    with open(f'./downloads/{title}.txt', 'wt+', encoding='UTF-8') as f:
-        for content in contents:
-            f.write(content)
+    with open(f'./downloads/{title}.txt', 'wt+', encoding=encoding) as f:
+        f.writelines(contents)
 
 
 def novel_crawler(novel_id):
-    start = time.time()
     title = extract_title(novel_id)
     chapters = extract_chapters(novel_id)
-    download(title, chapters)
-    print(f'Time spent: {time.time() - start}s')
+    contents = download(chapters, parallelism=64)
+    write_to_file(title, contents)
 
 
 if __name__ == '__main__':
+    start = time.time()
     novel_crawler('25644')
+    print(f'Time spent: {time.time() - start}s')
