@@ -83,4 +83,4 @@ if __name__ == '__main__':
     novel_crawler('25644', mode=multithreading, parallelism=128)
     novel_crawler('25644', mode=multiprocessing, parallelism=128)
     novel_crawler('25644', mode=coroutine, parallelism=128)
-    novel_crawler('25644', mode=multiprocessing, parallelism=128)
+    novel_crawler('25644', mode=multiprocessing, parallelism=128)  # after patch
